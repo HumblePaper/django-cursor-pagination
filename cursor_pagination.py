@@ -79,6 +79,7 @@ class CursorPaginator(object):
         items = qs[:page_size]
         if last is not None:
             items.reverse()
+        print('has_additional', len(qs), len(items))
         has_additional = len(qs) > len(items)
         additional_kwargs = {}
         if first is not None:
@@ -88,12 +89,17 @@ class CursorPaginator(object):
         return CursorPage(items, self, **additional_kwargs)
 
     def apply_cursor(self, cursor, queryset, reverse=False):
+        print('apply_cursor')
         position = self.decode_cursor(cursor)
 
         is_reversed = self.ordering[0].startswith('-')
+
         queryset = queryset.annotate(cursor=Tuple(*[o.lstrip('-') for o in self.ordering]))
+        print('querysetannotated', queryset)
         current_position = [Value(p, output_field=TextField()) for p in position]
+        print('current_position', current_position)
         if reverse != is_reversed:
+            print('reverse is not')
             return queryset.filter(cursor__lt=Tuple(*current_position))
         return queryset.filter(cursor__gt=Tuple(*current_position))
 
